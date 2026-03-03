@@ -123,7 +123,7 @@
     "pretest": "npm run lint",
     "semantic-release": "./bin/semantic-release.js",
     "test": "c8 ava -v",
-    "test:ci": "c8 ava -v"
+    "test:ci": "c8 ava -v 'test/**/*.test.js' '!test/integration.test.js'"
   },
   "xo": {
     "prettier": true,

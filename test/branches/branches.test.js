@@ -218,14 +218,8 @@ test('Throw SemanticReleaseError for invalid configurations', async (t) => {
   t.is(errors[2].code, 'EPRERELEASEBRANCH');
   t.truthy(errors[2].message);
   t.truthy(errors[2].details);
-  t.is(errors[3].name, 'SemanticReleaseError');
-  t.is(errors[3].code, 'EPRERELEASEBRANCHES');
-  t.truthy(errors[3].message);
-  t.truthy(errors[3].details);
-  t.is(errors[4].name, 'SemanticReleaseError');
-  t.is(errors[4].code, 'ERELEASEBRANCHES');
-  t.truthy(errors[4].message);
-  t.truthy(errors[4].details);
+  // EPRERELEASEBRANCHES and ERELEASEBRANCHES are not thrown because branchesValidator
+  // always returns true for prerelease and release types (Tenna LLC custom behavior)
 });
 
 test('Throw a SemanticReleaseError if there is duplicate branches', async (t) => {

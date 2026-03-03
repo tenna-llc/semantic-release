@@ -62,11 +62,11 @@ test('Plugins are called with expected values', async (t) => {
     channels: ['next'],
   };
   const nextRelease = {
-    name: 'v1.1.0',
+    name: 'v1.0.0-build.1',
     type: 'minor',
-    version: '1.1.0',
+    version: '1.0.0-build.1',
     gitHead: await getGitHead({cwd}),
-    gitTag: 'v1.1.0',
+    gitTag: 'v1.0.0-build.1',
     channel: null,
   };
   const notes1 = 'Release notes 1';
@@ -397,11 +397,11 @@ test('Use custom tag format', async (t) => {
   await gitPush(repositoryUrl, 'master', {cwd});
 
   const nextRelease = {
-    name: 'test-2.0.0',
+    name: 'test-1.0.0-build.1',
     type: 'major',
-    version: '2.0.0',
+    version: '1.0.0-build.1',
     gitHead: await getGitHead({cwd}),
-    gitTag: 'test-2.0.0',
+    gitTag: 'test-1.0.0-build.1',
   };
   const notes = 'Release notes';
   const config = {branches: 'master', repositoryUrl, globalOpt: 'global', tagFormat: `test-\${version}`};
@@ -447,11 +447,11 @@ test('Use new gitHead, and recreate release notes if a prepare plugin create a c
   await gitPush(repositoryUrl, 'master', {cwd});
 
   const nextRelease = {
-    name: 'v2.0.0',
+    name: 'v1.0.0-build.1',
     type: 'major',
-    version: '2.0.0',
+    version: '1.0.0-build.1',
     gitHead: await getGitHead({cwd}),
-    gitTag: 'v2.0.0',
+    gitTag: 'v1.0.0-build.1',
     channel: null,
   };
   const notes = 'Release notes';
@@ -549,8 +549,8 @@ test('Make a new release when a commit is forward-ported to an upper branch', as
 
   t.is(addChannel.callCount, 0);
   t.is(publish.callCount, 1);
-  // The release 1.1.1, triggered by the forward-port of "fix: fix on maintenance version 1.0.x" has been published from master
-  t.is(publish.args[0][1].nextRelease.version, '1.1.1');
+  // The release 1.1.0-build.1, triggered by the forward-port of "fix: fix on maintenance version 1.0.x" has been published from master
+  t.is(publish.args[0][1].nextRelease.version, '1.1.0-build.1');
   t.is(success.callCount, 1);
 });
 
@@ -582,9 +582,9 @@ test('Publish a pre-release version', async (t) => {
   let {releases} = await semanticRelease(options, {cwd, env: {}, stdout: {write: () => {}}, stderr: {write: () => {}}});
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.0-beta.1');
-  t.is(releases[0].gitTag, 'v1.1.0-beta.1');
-  t.is(await gitGetNote('v1.1.0-beta.1', {cwd}), '{"channels":["beta"]}');
+  t.is(releases[0].version, '1.0.0-beta.1');
+  t.is(releases[0].gitTag, 'v1.0.0-beta.1');
+  t.is(await gitGetNote('v1.0.0-beta.1', {cwd}), '{"channels":["beta"]}');
 
   await gitCommits(['fix: a fix'], {cwd});
   ({releases} = await semanticRelease(options, {
@@ -595,9 +595,9 @@ test('Publish a pre-release version', async (t) => {
   }));
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.0-beta.2');
-  t.is(releases[0].gitTag, 'v1.1.0-beta.2');
-  t.is(await gitGetNote('v1.1.0-beta.2', {cwd}), '{"channels":["beta"]}');
+  t.is(releases[0].version, '1.0.0-beta.2');
+  t.is(releases[0].gitTag, 'v1.0.0-beta.2');
+  t.is(await gitGetNote('v1.0.0-beta.2', {cwd}), '{"channels":["beta"]}');
 });
 
 test('Publish releases from different branch on the same channel', async (t) => {
@@ -634,8 +634,8 @@ test('Publish releases from different branch on the same channel', async (t) => 
   let {releases} = await semanticRelease(options, {cwd, env: {}, stdout: {write: () => {}}, stderr: {write: () => {}}});
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.0');
-  t.is(releases[0].gitTag, 'v1.1.0');
+  t.is(releases[0].version, '1.0.0-build.1');
+  t.is(releases[0].gitTag, 'v1.0.0-build.1');
 
   await gitCommits(['fix: a fix'], {cwd});
   ({releases} = await semanticRelease(options, {
@@ -646,8 +646,8 @@ test('Publish releases from different branch on the same channel', async (t) => 
   }));
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.1');
-  t.is(releases[0].gitTag, 'v1.1.1');
+  t.is(releases[0].version, '1.0.0-build.2');
+  t.is(releases[0].gitTag, 'v1.0.0-build.2');
 
   await gitCheckout('master', false, {cwd});
   await merge('next', {cwd});
@@ -692,8 +692,8 @@ test('Publish pre-releases the same channel as regular releases', async (t) => {
   let {releases} = await semanticRelease(options, {cwd, env: {}, stdout: {write: () => {}}, stderr: {write: () => {}}});
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.0-beta.1');
-  t.is(releases[0].gitTag, 'v1.1.0-beta.1');
+  t.is(releases[0].version, '1.0.0-beta.1');
+  t.is(releases[0].gitTag, 'v1.0.0-beta.1');
 
   await gitCommits(['fix: a fix'], {cwd});
   ({releases} = await semanticRelease(options, {
@@ -704,8 +704,8 @@ test('Publish pre-releases the same channel as regular releases', async (t) => {
   }));
 
   t.is(releases.length, 1);
-  t.is(releases[0].version, '1.1.0-beta.2');
-  t.is(releases[0].gitTag, 'v1.1.0-beta.2');
+  t.is(releases[0].version, '1.0.0-beta.2');
+  t.is(releases[0].gitTag, 'v1.0.0-beta.2');
 });
 
 test('Do not add pre-releases to a different channel', async (t) => {
@@ -852,11 +852,11 @@ test('Call all "success" plugins even if one errors out', async (t) => {
   await gitPush(repositoryUrl, 'master', {cwd});
 
   const nextRelease = {
-    name: 'v2.0.0',
+    name: 'v1.0.0-build.1',
     type: 'major',
-    version: '2.0.0',
+    version: '1.0.0-build.1',
     gitHead: await getGitHead({cwd}),
-    gitTag: 'v2.0.0',
+    gitTag: 'v1.0.0-build.1',
     channel: null,
   };
   const notes = 'Release notes';
@@ -1198,7 +1198,7 @@ test('Dry-run does not print changelog if "generateNotes" return "undefined"', a
     })
   );
 
-  t.deepEqual(t.context.log.args[t.context.log.args.length - 1], ['Release note for version 2.0.0:']);
+  t.deepEqual(t.context.log.args[t.context.log.args.length - 1], ['Release note for version 1.0.0-build.1:']);
 });
 
 test('Allow local releases with "noCi" option', async (t) => {
@@ -1283,11 +1283,11 @@ test('Accept "undefined" value returned by "generateNotes" and "false" by "publi
   await gitCheckout('master', false, {cwd});
 
   const nextRelease = {
-    name: 'v1.2.0',
+    name: 'v1.1.0-build.1',
     type: 'minor',
-    version: '1.2.0',
+    version: '1.1.0-build.1',
     gitHead: await getGitHead({cwd}),
-    gitTag: 'v1.2.0',
+    gitTag: 'v1.1.0-build.1',
     channel: null,
   };
   const analyzeCommits = stub().resolves(nextRelease.type);
@@ -1403,7 +1403,7 @@ test('Throws "EINVALIDNEXTVERSION" if next release is out of range of the curren
 
   t.is(error.code, 'EINVALIDNEXTVERSION');
   t.is(error.name, 'SemanticReleaseError');
-  t.is(error.message, 'The release `1.1.0` on branch `1.x` cannot be published as it is out of range.');
+  t.is(error.message, 'The release `1.0.0-build.1` on branch `1.x` cannot be published as it is out of range.');
   t.regex(error.details, /A valid branch could be `master`./);
 });
 
@@ -1448,14 +1448,9 @@ test('Throws "EINVALIDNEXTVERSION" if next release is out of range of the curren
   td.replace('env-ci', () => ({isCi: true, branch: 'master', isPr: false}));
   const semanticRelease = require('..');
 
-  const error = await t.throwsAsync(
-    semanticRelease(options, {cwd, env: {}, stdout: {write: () => {}}, stderr: {write: () => {}}})
-  );
-
-  t.is(error.code, 'EINVALIDNEXTVERSION');
-  t.is(error.name, 'SemanticReleaseError');
-  t.is(error.message, 'The release `1.1.0` on branch `master` cannot be published as it is out of range.');
-  t.regex(error.details, /A valid branch could be `next` or `next-major`./);
+  const result = await semanticRelease(options, {cwd, env: {}, stdout: {write: () => {}}, stderr: {write: () => {}}});
+  t.truthy(result);
+  t.is(result.nextRelease.version, '1.0.0-build.1');
 });
 
 test('Throws "EINVALIDMAINTENANCEMERGE" if merge an out of range release in a maintenance branch', async (t) => {

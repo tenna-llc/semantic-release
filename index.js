@@ -177,7 +177,10 @@ async function run(context, plugins) {
   nextRelease.gitTag = makeTag(options.tagFormat, nextRelease.version);
   nextRelease.name = nextRelease.gitTag;
 
-  if (context.branch.type !== 'prerelease' && !semver.satisfies(nextRelease.version, context.branch.range)) {
+  const rangeCheckVersion = semver.prerelease(nextRelease.version)
+    ? semver.coerce(nextRelease.version).version
+    : nextRelease.version;
+  if (context.branch.type !== 'prerelease' && !semver.satisfies(rangeCheckVersion, context.branch.range)) {
     throw getError('EINVALIDNEXTVERSION', {
       ...context,
       validBranches: context.branches.filter(
