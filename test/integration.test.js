@@ -629,7 +629,18 @@ test('Exit with 1 if missing permission to push to the remote repository', async
   const {stderr, exitCode} = await execa(
     cli,
     ['--repository-url', 'http://user:wrong_pass@localhost:2080/git/unauthorized.git'],
-    {env: {...env, GH_TOKEN: 'user:wrong_pass'}, cwd, reject: false, extendEnv: false}
+    {
+      env: {
+        ...env,
+        GH_TOKEN: 'user:wrong_pass',
+        GIT_TERMINAL_PROMPT: '0',
+        GIT_ASKPASS: 'echo',
+        GIT_CONFIG_GLOBAL: '/dev/null',
+      },
+      cwd,
+      reject: false,
+      extendEnv: false,
+    }
   );
   // Verify the type and message are logged
   t.regex(stderr, /EGITNOPERMISSION/);
@@ -650,7 +661,13 @@ test('Hide sensitive environment variable values from the logs', async (t) => {
 
   t.log('$ semantic-release');
   const {stdout, stderr} = await execa(cli, [], {
-    env: {...env, MY_TOKEN: 'secret token'},
+    env: {
+      ...env,
+      MY_TOKEN: 'secret token',
+      GIT_TERMINAL_PROMPT: '0',
+      GIT_ASKPASS: 'echo',
+      GIT_CONFIG_GLOBAL: '/dev/null',
+    },
     cwd,
     reject: false,
     extendEnv: false,
@@ -673,7 +690,8 @@ test('Use the valid git credentials when multiple are provided', async (t) => {
         GITLAB_TOKEN: 'trash',
         BB_TOKEN_BASIC_AUTH: gitbox.gitCredential,
         GIT_ASKPASS: 'echo',
-        GIT_TERMINAL_PROMPT: 0,
+        GIT_TERMINAL_PROMPT: '0',
+        GIT_CONFIG_GLOBAL: '/dev/null',
       },
       branch: {name: 'master'},
       options: {repositoryUrl: 'http://toto@localhost:2080/git/test-auth.git'},
@@ -693,7 +711,8 @@ test('Use the repository URL as is if none of the given git credentials are vali
         GITHUB_TOKEN: 'dummy',
         GITLAB_TOKEN: 'trash',
         GIT_ASKPASS: 'echo',
-        GIT_TERMINAL_PROMPT: 0,
+        GIT_TERMINAL_PROMPT: '0',
+        GIT_CONFIG_GLOBAL: '/dev/null',
       },
       branch: {name: 'master'},
       options: {repositoryUrl: dummyUrl},

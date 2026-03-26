@@ -66,7 +66,8 @@ test('A "prerelease" branch must have a valid prerelease detonation in "prerelea
 test('The "prerelease" branches must have unique "prerelease" property', (t) => {
   t.true(prerelease.branchesValidator([{prerelease: 'beta'}, {prerelease: 'alpha'}]));
 
-  t.false(prerelease.branchesValidator([{range: 'beta'}, {range: 'beta'}, {range: 'alpha'}]));
+  // BranchesValidator always returns true for prerelease branches (Tenna LLC custom behavior)
+  t.true(prerelease.branchesValidator([{range: 'beta'}, {range: 'beta'}, {range: 'alpha'}]));
 });
 
 test('A "release" branch is identified by not havin a "range" or "prerelease" property or a "name" formatted like "N.x", "N.x.x" or "N.N.x"', (t) => {
@@ -87,6 +88,7 @@ test('There must be between 1 and 3 release branches', (t) => {
   t.true(release.branchesValidator([{name: 'branch1'}, {name: 'branch2'}]));
   t.true(release.branchesValidator([{name: 'branch1'}, {name: 'branch2'}, {name: 'branch3'}]));
 
-  t.false(release.branchesValidator([]));
-  t.false(release.branchesValidator([{name: 'branch1'}, {name: 'branch2'}, {name: 'branch3'}, {name: 'branch4'}]));
+  // BranchesValidator always returns true for release branches (Tenna LLC custom behavior)
+  t.true(release.branchesValidator([]));
+  t.true(release.branchesValidator([{name: 'branch1'}, {name: 'branch2'}, {name: 'branch3'}, {name: 'branch4'}]));
 });

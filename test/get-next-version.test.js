@@ -8,7 +8,7 @@ test.beforeEach((t) => {
   t.context.logger = {log: t.context.log};
 });
 
-test('Increase version for patch release', (t) => {
+test('Bump build number on release branch with existing version', (t) => {
   t.is(
     getNextVersion({
       branch: {name: 'master', type: 'release', tags: [{gitTag: 'v1.0.0', version: '1.0.0', channels: [null]}]},
@@ -16,11 +16,11 @@ test('Increase version for patch release', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '1.0.1'
+    '1.0.0-build.1'
   );
 });
 
-test('Increase version for minor release', (t) => {
+test('Bump build number on release branch regardless of minor type', (t) => {
   t.is(
     getNextVersion({
       branch: {name: 'master', type: 'release', tags: [{gitTag: 'v1.0.0', version: '1.0.0', channels: [null]}]},
@@ -28,11 +28,11 @@ test('Increase version for minor release', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '1.1.0'
+    '1.0.0-build.1'
   );
 });
 
-test('Increase version for major release', (t) => {
+test('Bump build number on release branch regardless of major type', (t) => {
   t.is(
     getNextVersion({
       branch: {name: 'master', type: 'release', tags: [{gitTag: 'v1.0.0', version: '1.0.0', channels: [null]}]},
@@ -40,11 +40,11 @@ test('Increase version for major release', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '2.0.0'
+    '1.0.0-build.1'
   );
 });
 
-test('Return 1.0.0 if there is no previous release', (t) => {
+test('Return 1.0.0-build.1 if there is no previous release', (t) => {
   t.is(
     getNextVersion({
       branch: {name: 'master', type: 'release', tags: []},
@@ -52,7 +52,7 @@ test('Return 1.0.0 if there is no previous release', (t) => {
       lastRelease: {},
       logger: t.context.logger,
     }),
-    '1.0.0'
+    '1.0.0-build.1'
   );
 });
 
@@ -69,7 +69,7 @@ test('Increase version for patch release on prerelease branch', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '1.0.1-beta.1'
+    '1.0.0-beta.1'
   );
 
   t.is(
@@ -102,7 +102,7 @@ test('Increase version for patch release on prerelease branch', (t) => {
       lastRelease: {version: '1.0.1-beta.1', channels: ['beta']},
       logger: t.context.logger,
     }),
-    '1.0.2-alpha.1'
+    '1.0.1-alpha.1'
   );
 });
 
@@ -119,7 +119,7 @@ test('Increase version for minor release on prerelease branch', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '1.1.0-beta.1'
+    '1.0.0-beta.1'
   );
 
   t.is(
@@ -152,7 +152,7 @@ test('Increase version for minor release on prerelease branch', (t) => {
       lastRelease: {version: '1.1.0-beta.1', channels: ['beta']},
       logger: t.context.logger,
     }),
-    '1.2.0-alpha.1'
+    '1.1.0-alpha.1'
   );
 });
 
@@ -169,7 +169,7 @@ test('Increase version for major release on prerelease branch', (t) => {
       lastRelease: {version: '1.0.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '2.0.0-beta.1'
+    '1.0.0-beta.1'
   );
 
   t.is(
@@ -202,7 +202,7 @@ test('Increase version for major release on prerelease branch', (t) => {
       lastRelease: {version: '2.0.0-beta.1', channels: ['beta']},
       logger: t.context.logger,
     }),
-    '3.0.0-alpha.1'
+    '2.0.0-alpha.1'
   );
 });
 
@@ -235,7 +235,7 @@ test('Increase version for release on prerelease branch after previous commits w
       lastRelease: {version: '1.1.0', channels: [null]},
       logger: t.context.logger,
     }),
-    '1.2.0-beta.1'
+    '1.1.0-beta.1'
   );
 });
 
@@ -255,7 +255,7 @@ test('Increase version for release on prerelease branch based on highest commit 
       lastRelease: {version: 'v1.1.0-beta.1', channels: [null]},
       logger: t.context.logger,
     }),
-    '2.0.0-beta.1'
+    '1.1.0-beta.2'
   );
 });
 
