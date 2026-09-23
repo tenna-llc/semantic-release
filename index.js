@@ -1,5 +1,6 @@
 const {pick} = require('lodash');
 const marked = require('marked');
+const execa = require('execa');
 const envCi = require('env-ci');
 const hookStd = require('hook-std');
 const semver = require('semver');
@@ -16,7 +17,17 @@ const {extractErrors, makeTag} = require('./lib/utils');
 const getGitAuthUrl = require('./lib/get-git-auth-url');
 const getBranches = require('./lib/branches');
 const getLogger = require('./lib/get-logger');
-const {verifyAuth, isBranchUpToDate, getGitHead, tag, push, pushNotes, getTagHead, addNote} = require('./lib/git');
+const {
+  verifyAuth,
+  isBranchUpToDate,
+  getGitHead,
+  tag,
+  push,
+  pushNotes,
+  pushAtomic,
+  getTagHead,
+  addNote,
+} = require('./lib/git');
 const getError = require('./lib/get-error');
 const {COMMIT_NAME, COMMIT_EMAIL} = require('./lib/definitions/constants');
 
@@ -100,6 +111,22 @@ async function run(context, plugins) {
 
   logger.success(`Allowed to push to the Git repository`);
 
+  if (options.atomicRelease) {
+    const paths = options.plugins.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin));
+    const allowed = new Set([
+      '@semantic-release/commit-analyzer',
+      '@semantic-release/release-notes-generator',
+      '@semantic-release/changelog',
+      '@semantic-release/npm',
+      '@semantic-release/github',
+      './.github/workflows/scripts/atomic-prep.js',
+    ]);
+    const incompatible = paths.filter((path) => !allowed.has(path));
+    if (incompatible.length > 0) {
+      throw new Error(`atomicRelease does not permit unreviewed plugins: ${incompatible.join(', ')}`);
+    }
+  }
+
   await plugins.verifyConditions(context);
 
   const errors = [];
@@ -121,8 +148,14 @@ async function run(context, plugins) {
         logger.warn(`Skip ${nextRelease.gitTag} tag creation in dry-run mode`);
       } else {
         await addNote({channels: [...currentRelease.channels, nextRelease.channel]}, nextRelease.gitHead, {cwd, env});
-        await push(options.repositoryUrl, {cwd, env});
-        await pushNotes(options.repositoryUrl, {cwd, env});
+        if (options.atomicRelease) {
+          const head = await getGitHead({cwd, env});
+          await pushAtomic(options.repositoryUrl, context.branch.name, null, head, {cwd, env});
+        } else {
+          await push(options.repositoryUrl, {cwd, env});
+          await pushNotes(options.repositoryUrl, {cwd, env});
+        }
+
         logger.success(
           `Add ${nextRelease.channel ? `channel ${nextRelease.channel}` : 'default channel'} to tag ${
             nextRelease.gitTag
@@ -193,6 +226,21 @@ async function run(context, plugins) {
 
   nextRelease.notes = await plugins.generateNotes(context);
 
+  const originalGitHead = nextRelease.gitHead;
+  if (options.atomicRelease && !options.dryRun) {
+    const existing = await execa(
+      'git',
+      ['ls-remote', '--refs', options.repositoryUrl, `refs/tags/${nextRelease.gitTag}`],
+      {cwd, env}
+    );
+    const local = await execa('git', ['show-ref', '--verify', '--quiet', `refs/tags/${nextRelease.gitTag}`], {
+      cwd,
+      env,
+      reject: false,
+    });
+    if (existing.stdout || local.exitCode === 0) throw new Error(`Release tag already exists: ${nextRelease.gitTag}`);
+  }
+
   await plugins.prepare(context);
 
   if (options.dryRun) {
@@ -201,8 +249,13 @@ async function run(context, plugins) {
     // Create the tag before calling the publish plugins as some require the tag to exists
     await tag(nextRelease.gitTag, nextRelease.gitHead, {cwd, env});
     await addNote({channels: [nextRelease.channel]}, nextRelease.gitHead, {cwd, env});
-    await push(options.repositoryUrl, {cwd, env});
-    await pushNotes(options.repositoryUrl, {cwd, env});
+    if (options.atomicRelease) {
+      await pushAtomic(options.repositoryUrl, context.branch.name, nextRelease.gitTag, originalGitHead, {cwd, env});
+    } else {
+      await push(options.repositoryUrl, {cwd, env});
+      await pushNotes(options.repositoryUrl, {cwd, env});
+    }
+
     logger.success(`Created tag ${nextRelease.gitTag}`);
   }
 
