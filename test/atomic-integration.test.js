@@ -5,7 +5,7 @@ const tempy = require('tempy');
 const execa = require('execa');
 const release = require('..');
 
-async function fixture(failingPrepare = false) {
+async function fixture(failingPrepare = false, version = '1.0.0-build.0') {
   const root = tempy.directory();
   const bare = path.join(root, 'remote.git');
   const cwd = path.join(root, 'work');
@@ -23,7 +23,6 @@ async function fixture(failingPrepare = false) {
       ? `exports.prepare = () => { throw new Error('fixture preparation failure'); };`
       : `const cp = require('child_process'); exports.prepare = () => { cp.execFileSync('git', ['add', 'package.json', 'package-lock.json']); cp.execFileSync('git', ['commit', '-m', 'chore(release): prepared']); };`
   );
-  const version = '1.0.0-build.0';
   fs.writeFileSync(path.join(cwd, 'package.json'), JSON.stringify({name: 'atomic-fixture', version}));
   fs.writeFileSync(
     path.join(cwd, 'package-lock.json'),
@@ -94,4 +93,53 @@ test.serial('failed preparation leaves all remote refs unchanged', async (t) => 
   await t.throwsAsync(run(cwd), {message: /fixture preparation failure/});
   const after = (await execa('git', ['ls-remote', '--heads', '--tags', bare], {cwd})).stdout;
   t.is(after, before);
+});
+
+async function divergentFixture(collision = false) {
+  const {cwd, bare} = await fixture(false, '3.1.0-build.2');
+  const git = (...args) => execa('git', args, {cwd});
+  const configPath = path.join(cwd, '.releaserc.json');
+  const config = JSON.parse(fs.readFileSync(configPath));
+  config.buildVersionSource = 'package';
+  fs.writeFileSync(configPath, JSON.stringify(config));
+  for (const file of ['package.json', 'package-lock.json']) {
+    const filename = path.join(cwd, file);
+    const metadata = JSON.parse(fs.readFileSync(filename));
+    metadata.version = '3.1.0-build.26';
+    if (metadata.packages) metadata.packages[''].version = metadata.version;
+    fs.writeFileSync(filename, JSON.stringify(metadata));
+  }
+
+  await git('switch', '-c', 'original-history');
+  await git('add', '.');
+  await git('commit', '-m', 'chore(release): original build 26');
+  await git('tag', 'v3.1.0-build.26');
+  await git('push', 'origin', 'refs/tags/v3.1.0-build.26');
+  if (collision) {
+    await git('tag', 'v3.1.0-build.27');
+    await git('push', 'origin', 'refs/tags/v3.1.0-build.27');
+  }
+
+  await git('switch', 'main');
+  await git('checkout', 'original-history', '--', '.');
+  await git('commit', '-m', 'fix: cherry-picked release metadata');
+  await git('push', 'origin', 'main');
+  return {cwd, bare, before: (await git('ls-remote', '--refs', bare)).stdout};
+}
+
+test.serial('package allocation publishes beyond a tag on divergent history', async (t) => {
+  const {cwd, bare} = await divergentFixture();
+  const result = await run(cwd);
+  t.is(result.lastRelease.version, '3.1.0-build.2');
+  t.is(result.nextRelease.version, '3.1.0-build.27');
+  const head = (await execa('git', ['rev-parse', 'HEAD'], {cwd})).stdout;
+  const refs = (await execa('git', ['ls-remote', '--refs', bare], {cwd})).stdout;
+  t.true(refs.includes(`${head}\trefs/heads/main`));
+  t.true(refs.includes(`${head}\trefs/tags/v3.1.0-build.27`));
+});
+
+test.serial('package allocation rejects collisions without publishing', async (t) => {
+  const {cwd, bare, before} = await divergentFixture(true);
+  await t.throwsAsync(run(cwd), {message: /Release tag already exists/});
+  t.is((await execa('git', ['ls-remote', '--refs', bare], {cwd})).stdout, before);
 });
