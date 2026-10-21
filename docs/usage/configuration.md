@@ -140,6 +140,17 @@ Output debugging information. This can also be enabled by setting the `DEBUG` en
 
 **Note**: The `debug` is used only supported via CLI argument. To enable debug mode from the [JS API](../developer-guide/js-api.md#javascript-api) use `require('debug').enable('semantic-release:*')`.
 
+### buildVersionSource
+
+Set `buildVersionSource: "package"` in the configuration file to allocate automatic
+build versions from the checkout's `package.json`, preserving its major, minor,
+and patch. The version must be canonical `MAJOR.MINOR.PATCH-build.N` with safe
+integer counters. Consumers must validate their package/lockfile equality and
+published version provenance before preparation. This supports cherry-picked
+release metadata whose tags remain on another history. Candidate tags remain
+immutable: collisions fail rather than moving tags or skipping build numbers.
+Without this option, allocation continues to use reachable release tags.
+
 ## Git environment variables
 
 | Variable              | Description                                                                                                                                                                                                                    | Default                              |

@@ -115,3 +115,9 @@ test('Return "true" if all verification pass', async (t) => {
 
   await t.notThrowsAsync(verify({cwd, options}));
 });
+
+test('Reject unsupported package build allocation configuration', async (t) => {
+  await t.throwsAsync(verify({options: {buildVersionSource: 'unknown'}}), {
+    message: 'buildVersionSource must be "package" when specified',
+  });
+});
